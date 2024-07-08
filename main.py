@@ -25,6 +25,7 @@ class NewPostForm(FlaskForm):
     author = StringField(label='author', validators=[DataRequired()])
     img_url = StringField(label='img_url', validators=[URL()])
     body = CKEditorField(label='body', validators=[DataRequired()])
+    submit = SubmitField(label="Create")
 
 # CREATE DATABASE
 class Base(DeclarativeBase):
@@ -65,13 +66,38 @@ def show_post(post_id):
 @app.route('/new-post', methods=["GET","POST"])
 def new_post():
     if request.method == "POST":
-        print("posting")
+        print("post request activated")
+        today = date.today()
+        formatted_date = today.strftime("%B %d, %Y")
+        
+        new_post = BlogPost(
+            title = request.form.get('title'),
+            subtitle = request.form.get('subtitle'),
+            body = request.form.get('body'),
+            author = request.form.get('author'),
+            img_url = request.form.get('img_url'),
+            date = formatted_date
+        )
+        db.session.add(new_post)
+        db.session.commit()
+        return redirect(url_for('get_all_posts'))
+        
     else:
+        print("get request returned")
         blank_form = NewPostForm()
         
         return render_template('make-post.html',form=blank_form)
-# TODO: edit_post() to change an existing blog post
 
+# TODO: edit_post() to change an existing blog post
+@app.route("/edit_post/<int:id>", methods=["GET", "POST"])
+def edit_post(id):
+    edit_post = db.get_or_404(BlogPost, id)
+    form = NewPostForm()
+    if request.method == "GET":
+        return render_template('make-post.html', form=form, post=edit_post)
+    
+    
+    
 # TODO: delete_post() to remove a blog post from the database
 
 # Below is the code from previous lessons. No changes needed.
