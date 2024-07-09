@@ -92,13 +92,32 @@ def new_post():
 @app.route("/edit_post/<int:id>", methods=["GET", "POST"])
 def edit_post(id):
     edit_post = db.get_or_404(BlogPost, id)
-    form = NewPostForm()
-    if request.method == "GET":
-        return render_template('make-post.html', form=form, post=edit_post)
+    form = NewPostForm(request.form, obj=edit_post)
+    print(request.form)
     
+        
+    if form.validate_on_submit():
+        print("validated")
+        edit_post.title = form.title.data
+        edit_post.subtitle = form.subtitle.data
+        edit_post.author = form.author.data
+        edit_post.body = form.body.data
+        edit_post.img_url = form.img_url.data
     
+        db.session.commit()
+        return redirect(url_for('show_post',post_id=edit_post.id))
+    else:
+        form.submit.label.text = "Edit"
+        return render_template('make-post.html', edit=True, form=form, post=edit_post)
     
+
 # TODO: delete_post() to remove a blog post from the database
+@app.route("/delete/<int:id>")
+def delete_post(id):
+    to_delete = db.get_or_404(BlogPost, id)
+    db.session.delete(to_delete)
+    db.session.commit()
+    return redirect(url_for("get_all_posts"))
 
 # Below is the code from previous lessons. No changes needed.
 @app.route("/about")
